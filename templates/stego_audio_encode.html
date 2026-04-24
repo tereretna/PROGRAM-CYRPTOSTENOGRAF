@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}Encode Stego Audio{% endblock %}
+{% block topbar_title %}🎵 Steganografi Audio — Encode{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="cs-card">
+      <div class="cs-card-header" style="color:#6ee7b7;">
+        <i class="bi bi-music-note-beamed"></i> Sembunyikan Pesan di File Audio WAV
+        <span class="ms-auto metric-pill" style="font-size:.7rem;">WAV 16-bit PCM</span>
+      </div>
+      <div class="cs-card-body">
+        <form method="POST" enctype="multipart/form-data" id="audio-encode-form">
+
+          <div class="mb-3">
+            <label class="form-label">Upload File Audio (WAV)</label>
+            <div class="upload-area" id="drop-area">
+              <div class="upload-icon"><i class="bi bi-file-music"></i></div>
+              <div class="upload-label" style="color:var(--text-muted);font-size:.85rem;">
+                Klik atau drag & drop file WAV di sini
+              </div>
+              <small style="color:var(--text-muted);font-size:.73rem;">Format: WAV 16-bit PCM · Maks. 50 MB</small>
+            </div>
+            <input type="file" id="audio-input" name="audio" accept=".wav" required style="display:none;">
+          </div>
+
+          <!-- Info kapasitas -->
+          <div id="capacity-info" style="display:none;" class="mb-3">
+            <div class="p-3 rounded" style="background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.2);">
+              <div class="row text-center g-2">
+                <div class="col-4">
+                  <div style="font-size:1rem;font-weight:800;color:#6ee7b7;" id="cap-durasi">-</div>
+                  <div style="font-size:.7rem;color:var(--text-muted);">Durasi (detik)</div>
+                </div>
+                <div class="col-4">
+                  <div style="font-size:1rem;font-weight:800;color:#6ee7b7;" id="cap-max">-</div>
+                  <div style="font-size:.7rem;color:var(--text-muted);">Maks. Byte</div>
+                </div>
+                <div class="col-4">
+                  <div style="font-size:1rem;font-weight:800;color:var(--primary);" id="cap-usable">-</div>
+                  <div style="font-size:.7rem;color:var(--text-muted);">Dapat Digunakan</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Pesan Rahasia</label>
+            <textarea name="message" id="message-input" class="form-control" rows="4"
+              placeholder="Ketik pesan yang ingin disembunyikan dalam audio..." required
+              oninput="updateCharCount()"></textarea>
+            <div class="d-flex justify-content-end mt-1">
+              <small id="char-count" style="font-size:.72rem;color:var(--text-muted);">0 karakter</small>
+            </div>
+          </div>
+
+          <div class="mb-1">
+            <label class="form-label">Password Enkripsi</label>
+            <div class="input-group">
+              <input type="password" id="enc-pass" name="password" class="form-control"
+                placeholder="Password untuk mengenkripsi pesan..." required>
+              <button type="button" class="btn" style="background:var(--border-dim);color:var(--text-muted);"
+                onclick="togglePwd('enc-pass',this)"><i class="bi bi-eye"></i></button>
+            </div>
+          </div>
+          <div class="mb-3 mt-2">
+            <div style="background:rgba(255,255,255,.05);border-radius:4px;height:4px;overflow:hidden;">
+              <div id="strength-bar" class="strength-bar" style="width:0%;"></div>
+            </div>
+            <div class="d-flex justify-content-between mt-1">
+              <small style="font-size:.72rem;color:var(--text-muted);">Kekuatan Password</small>
+              <small id="strength-label" style="font-size:.72rem;font-weight:700;"></small>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-cs-primary w-100" id="submit-btn"
+            style="background:linear-gradient(135deg,#34d399,#059669);color:#0a0e1a;">
+            <i class="bi bi-download me-2"></i>Encode & Unduh File Audio Stego
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="cs-card mb-3">
+      <div class="cs-card-header" style="color:#fbbf24;">
+        <i class="bi bi-soundwave"></i> Metrik Evaluasi Audio
+      </div>
+      <div class="cs-card-body d-flex flex-column gap-3">
+        <div>
+          <div style="font-weight:700;color:var(--primary);font-size:.85rem;">🔊 PSNR Audio</div>
+          <div style="font-size:.78rem;color:var(--text-muted);margin-top:4px;">
+            Peak Signal-to-Noise Ratio mengukur kualitas audio stego.
+            <ul style="margin-top:4px;padding-left:1.2rem;">
+              <li>PSNR ≥ 60 dB → <strong style="color:var(--primary);">Sangat Baik</strong></li>
+              <li>PSNR 40–60 dB → Baik</li>
+              <li>PSNR &lt; 40 dB → Perlu durasi audio lebih panjang</li>
+            </ul>
+          </div>
+        </div>
+        <div>
+          <div style="font-weight:700;color:#6ee7b7;font-size:.85rem;">📡 SNR (Signal-to-Noise Ratio)</div>
+          <div style="font-size:.78rem;color:var(--text-muted);margin-top:4px;">
+            Rasio sinyal terhadap noise yang ditambahkan oleh proses steganografi.
+            Nilai SNR tinggi berarti audio stego hampir tidak bisa dibedakan dari aslinya.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cs-card">
+      <div class="cs-card-header" style="color:var(--primary);">
+        <i class="bi bi-info-circle-fill"></i> Persyaratan File Audio
+      </div>
+      <div class="cs-card-body d-flex flex-column gap-2" style="font-size:.79rem;color:var(--text-muted);">
+        <p>🎵 <strong style="color:var(--text-main);">Format WAV 16-bit PCM</strong> — format lain tidak didukung.</p>
+        <p>⏱️ <strong style="color:var(--text-main);">Durasi lebih panjang</strong> = kapasitas lebih besar.</p>
+        <p>🔒 <strong style="color:var(--text-main);">Password harus sama</strong> saat encode dan decode.</p>
+        <p>⚠️ <strong style="color:var(--text-main);">Jangan konversi</strong> file stego ke format lain (MP3, AAC).</p>
+        <div class="mt-2 p-3 rounded" style="background:rgba(52,211,153,.05);border:1px solid rgba(52,211,153,.15);">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#6ee7b7;">
+            Konversi WAV ke 16-bit PCM di Windows:<br>
+            Audacity → Export → WAV (PCM 16-bit)
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  initPasswordStrength('enc-pass', 'strength-bar', 'strength-label');
+  initDropArea('drop-area', 'audio-input');
+
+  function togglePwd(id, btn) {
+    const el = document.getElementById(id);
+    el.type = el.type === 'password' ? 'text' : 'password';
+    btn.innerHTML = el.type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
+  }
+
+  function updateCharCount() {
+    document.getElementById('char-count').textContent =
+      document.getElementById('message-input').value.length + ' karakter';
+  }
+
+  document.getElementById('audio-input').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const fd = new FormData();
+    fd.append('audio', file);
+    try {
+      const res  = await fetch('/api/audio-capacity', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.error) return;
+      document.getElementById('cap-durasi').textContent  = data.durasi + 's';
+      document.getElementById('cap-max').textContent     = data.max_byte.toLocaleString() + ' B';
+      document.getElementById('cap-usable').textContent  = data.usable_char.toLocaleString() + ' kar';
+      document.getElementById('capacity-info').style.display = 'block';
+    } catch {}
+  });
+
+  document.getElementById('audio-encode-form').addEventListener('submit', () => {
+    const btn = document.getElementById('submit-btn');
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Memproses...';
+    btn.disabled = true;
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,16 @@
+# Mengabaikan file hasil upload dan stego
+static/uploads/*
+!static/uploads/.gitkeep
+
+# Mengabaikan database agar log riwayat operasi tidak terpublikasi
+*.db
+cryptostego.db
+
+# Mengabaikan cache bawaan Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Lingkungan virtual (jika nanti kamu menggunakan venv)
+venv/
+env/

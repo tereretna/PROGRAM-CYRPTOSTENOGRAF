@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}CryptoStego{% endblock %} | Sistem Keamanan Data</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-brand">
+    <div class="logo-icon"><i class="bi bi-shield-lock-fill"></i></div>
+    <h5>CryptoStego</h5>
+    <small>AES-256 + Hybrid LSB</small>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section-title">Overview</div>
+    <a href="{{ url_for('dashboard') }}" class="nav-item-cs {% if request.endpoint == 'dashboard' %}active{% endif %}"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+    
+    <div class="nav-section-title">Kriptografi</div>
+    <a href="{{ url_for('crypto_enkripsi') }}" class="nav-item-cs {% if request.endpoint == 'crypto_enkripsi' %}active{% endif %}"><i class="bi bi-lock-fill"></i> Enkripsi AES</a>
+    <a href="{{ url_for('crypto_dekripsi') }}" class="nav-item-cs {% if request.endpoint == 'crypto_dekripsi' %}active{% endif %}"><i class="bi bi-unlock-fill"></i> Dekripsi AES</a>
+    
+    <div class="nav-section-title">Steganografi Citra</div>
+    <a href="{{ url_for('stego_image_encode') }}" class="nav-item-cs {% if request.endpoint == 'stego_image_encode' %}active{% endif %}"><i class="bi bi-image-fill"></i> Encode Gambar</a>
+    <a href="{{ url_for('stego_image_decode') }}" class="nav-item-cs {% if request.endpoint == 'stego_image_decode' %}active{% endif %}"><i class="bi bi-search"></i> Decode Gambar</a>
+    
+    <div class="nav-section-title">Steganografi Audio</div>
+    <a href="{{ url_for('stego_audio_encode') }}" class="nav-item-cs {% if request.endpoint == 'stego_audio_encode' %}active{% endif %}"><i class="bi bi-music-note-beamed"></i> Encode Audio</a>
+    <a href="{{ url_for('stego_audio_decode') }}" class="nav-item-cs {% if request.endpoint == 'stego_audio_decode' %}active{% endif %}"><i class="bi bi-soundwave"></i> Decode Audio</a>
+    
+    <div class="nav-section-title">Sistem</div>
+    <a href="{{ url_for('riwayat') }}" class="nav-item-cs {% if request.endpoint == 'riwayat' %}active{% endif %}"><i class="bi bi-clock-history"></i> Riwayat Operasi</a>
+  </div>
+</nav>
+
+<div id="main">
+  <div class="topbar">
+    <span class="topbar-title">{% block topbar_title %}Dashboard{% endblock %}</span>
+    <div class="topbar-badge"><i class="bi bi-shield-check me-1"></i> Data Aman</div>
+  </div>
+  
+  <div class="px-4 pt-3">
+    {% for cat, msg in get_flashed_messages(with_categories=True) %}
+      <div class="alert alert-{{ cat }} alert-dismissible fade show d-flex align-items-center gap-2">
+        <span>{{ msg }}</span>
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="page-content">
+    {% block content %}{% endblock %}
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Fungsi yang sama dari kode mu sebelumnya
+function initPasswordStrength(inputId, barId, labelId) {
+  const input = document.getElementById(inputId); const bar = document.getElementById(barId); const label = document.getElementById(labelId);
+  if (!input) return;
+  input.addEventListener('input', async () => {
+    if (!input.value) { bar.style.width = '0%'; label.textContent = ''; return; }
+    const res = await fetch('/api/password-strength', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: input.value }) });
+    const data = await res.json();
+    const colors = { danger: '#ef4444', warning: '#eab308', info: '#0ea5e9', success: '#22c55e' };
+    bar.style.width = data.persen + '%'; bar.style.background = colors[data.color]; label.textContent = data.label; label.style.color = colors[data.color];
+  });
+}
+function copyText(elementId) {
+  const el = document.getElementById(elementId);
+  navigator.clipboard.writeText(el.textContent.trim()).then(() => alert('Tersalin ke clipboard!'));
+}
+function initDropArea(areaId, inputId) {
+  const area = document.getElementById(areaId); const input = document.getElementById(inputId);
+  if (!area || !input) return;
+  area.addEventListener('click', () => input.click());
+  area.addEventListener('dragover', e => { e.preventDefault(); area.style.background = '#bae6fd'; });
+  area.addEventListener('dragleave', () => area.style.background = 'var(--primary-dim)');
+  area.addEventListener('drop', e => { e.preventDefault(); area.style.background = 'var(--primary-dim)'; input.files = e.dataTransfer.files; updateFileLabel(areaId, e.dataTransfer.files[0]?.name); });
+  input.addEventListener('change', () => updateFileLabel(areaId, input.files[0]?.name));
+}
+function updateFileLabel(areaId, name) {
+  const lbl = document.getElementById(areaId).querySelector('.upload-label');
+  if (lbl && name) lbl.textContent = '📄 ' + name;
+}
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

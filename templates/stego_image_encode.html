@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block title %}Encode Stego Gambar{% endblock %}
+{% block topbar_title %}🖼️ Steganografi Citra — Encode{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+  <div class="col-lg-7">
+    <div class="cs-card">
+      <div class="cs-card-header" style="color:#7dd3fc;">
+        <i class="bi bi-image-fill"></i> Sembunyikan Pesan di Gambar
+        <span class="ms-auto metric-pill" style="font-size:.7rem;">PNG / JPG → PNG Stego</span>
+      </div>
+      <div class="cs-card-body">
+        <form method="POST" enctype="multipart/form-data" id="encode-form">
+
+          <!-- Upload area -->
+          <div class="mb-3">
+            <label class="form-label">Upload Gambar (PNG/JPG)</label>
+            <div class="upload-area" id="drop-area">
+              <div class="upload-icon"><i class="bi bi-image"></i></div>
+              <div class="upload-label" style="color:var(--text-muted);font-size:.85rem;">
+                Klik atau drag & drop file gambar di sini
+              </div>
+              <small style="color:var(--text-muted);font-size:.73rem;">Maks. 50 MB · PNG / JPG / JPEG</small>
+            </div>
+            <input type="file" id="image-input" name="image" accept=".png,.jpg,.jpeg" required style="display:none;">
+          </div>
+
+          <!-- Kapasitas gambar (AJAX) -->
+          <div id="capacity-info" style="display:none;" class="mb-3">
+            <div class="p-3 rounded" style="background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.2);">
+              <div class="row text-center g-2">
+                <div class="col-4">
+                  <div style="font-size:1rem;font-weight:800;color:#7dd3fc;" id="cap-resolusi">-</div>
+                  <div style="font-size:.7rem;color:var(--text-muted);">Resolusi</div>
+                </div>
+                <div class="col-4">
+                  <div style="font-size:1rem;font-weight:800;color:#7dd3fc;" id="cap-max">-</div>
+                  <div style="font-size:.7rem;color:var(--text-muted);">Maks. Byte</div>
+                </div>
+                <div class="col-4">
+                  <div style="font-size:1rem;font-weight:800;color:var(--primary);" id="cap-usable">-</div>
+                  <div style="font-size:.7rem;color:var(--text-muted);">Dapat Digunakan</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Pesan Rahasia</label>
+            <textarea name="message" id="message-input" class="form-control" rows="4"
+              placeholder="Ketik pesan yang ingin disembunyikan..." required
+              oninput="updateCharCount()"></textarea>
+            <div class="d-flex justify-content-end mt-1">
+              <small id="char-count" style="font-size:.72rem;color:var(--text-muted);">0 karakter</small>
+            </div>
+          </div>
+
+          <div class="mb-1">
+            <label class="form-label">Password Enkripsi</label>
+            <div class="input-group">
+              <input type="password" id="enc-pass" name="password" class="form-control"
+                placeholder="Password untuk mengenkripsi pesan..." required>
+              <button type="button" class="btn" style="background:var(--border-dim);color:var(--text-muted);"
+                onclick="togglePwd('enc-pass', this)"><i class="bi bi-eye"></i></button>
+            </div>
+          </div>
+          <div class="mb-3 mt-2">
+            <div style="background:rgba(255,255,255,.05);border-radius:4px;height:4px;overflow:hidden;">
+              <div id="strength-bar" class="strength-bar" style="width:0%;"></div>
+            </div>
+            <div class="d-flex justify-content-between mt-1">
+              <small style="font-size:.72rem;color:var(--text-muted);">Kekuatan Password</small>
+              <small id="strength-label" style="font-size:.72rem;font-weight:700;"></small>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-cs-primary w-100" id="submit-btn">
+            <i class="bi bi-download me-2"></i>Encode & Unduh File Stego
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <!-- INFO METRIK -->
+    <div class="cs-card mb-3">
+      <div class="cs-card-header" style="color:#fbbf24;">
+        <i class="bi bi-bar-chart-fill"></i> Metrik Evaluasi
+      </div>
+      <div class="cs-card-body d-flex flex-column gap-3">
+        <div>
+          <div style="font-weight:700;color:var(--primary);font-size:.85rem;">📊 PSNR (Peak Signal-to-Noise Ratio)</div>
+          <div style="font-size:.78rem;color:var(--text-muted);margin-top:4px;">
+            Mengukur kualitas gambar stego vs asli dalam desibel (dB).
+            <ul style="margin-top:4px;padding-left:1.2rem;">
+              <li>PSNR ≥ 40 dB → <strong style="color:var(--primary);">Sangat Baik</strong> (tidak terlihat perbedaan)</li>
+              <li>PSNR 30–40 dB → Baik</li>
+              <li>PSNR &lt; 30 dB → Terlihat perbedaannya</li>
+            </ul>
+          </div>
+        </div>
+        <div>
+          <div style="font-weight:700;color:#a5f3fc;font-size:.85rem;">📐 SSIM (Structural Similarity Index)</div>
+          <div style="font-size:.78rem;color:var(--text-muted);margin-top:4px;">
+            Mengukur kesamaan struktur gambar (0 sampai 1).
+            <ul style="margin-top:4px;padding-left:1.2rem;">
+              <li>SSIM ≥ 0.99 → <strong style="color:var(--primary);">Sempurna</strong></li>
+              <li>SSIM 0.95–0.99 → Sangat Baik</li>
+              <li>SSIM &lt; 0.90 → Perlu gambar beresolusi lebih tinggi</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANDUAN PASSWORD -->
+    <div class="cs-card">
+      <div class="cs-card-header" style="color:var(--primary);">
+        <i class="bi bi-key-fill"></i> Tips Password & Penggunaan
+      </div>
+      <div class="cs-card-body d-flex flex-column gap-2" style="font-size:.79rem;color:var(--text-muted);">
+        <p>🔑 <strong style="color:var(--text-main);">Password harus sama</strong> saat encode dan decode.</p>
+        <p>📏 <strong style="color:var(--text-main);">Gunakan gambar resolusi tinggi</strong> agar kapasitas lebih besar.</p>
+        <p>🖼️ <strong style="color:var(--text-main);">Gunakan format PNG</strong> — tidak ada kompresi lossy yang merusak bit tersembunyi.</p>
+        <p>⚠️ <strong style="color:var(--text-main);">Jangan kompres ulang</strong> file stego — konversi ke JPG akan menghancurkan pesan.</p>
+        <p>💾 <strong style="color:var(--text-main);">Simpan password</strong> di tempat aman — tanpa password, pesan tidak dapat diekstrak.</p>
+        <div class="mt-2 p-3 rounded" style="background:rgba(15,244,198,.05);border:1px solid rgba(15,244,198,.15);font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--primary);">
+          Contoh Password Kuat:<br>
+          "Rahasia@Kampus2024!"<br>
+          "MyS3cr3t#Data_Safe"
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  initPasswordStrength('enc-pass', 'strength-bar', 'strength-label');
+  initDropArea('drop-area', 'image-input');
+
+  function togglePwd(id, btn) {
+    const el = document.getElementById(id);
+    el.type = el.type === 'password' ? 'text' : 'password';
+    btn.innerHTML = el.type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
+  }
+
+  function updateCharCount() {
+    const len = document.getElementById('message-input').value.length;
+    document.getElementById('char-count').textContent = len + ' karakter';
+  }
+
+  // Cek kapasitas gambar via AJAX saat file dipilih
+  document.getElementById('image-input').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const fd = new FormData();
+    fd.append('image', file);
+    try {
+      const res  = await fetch('/api/image-capacity', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.error) return;
+      document.getElementById('cap-resolusi').textContent = data.resolusi;
+      document.getElementById('cap-max').textContent     = data.max_byte.toLocaleString() + ' B';
+      document.getElementById('cap-usable').textContent  = data.usable_char.toLocaleString() + ' kar';
+      document.getElementById('capacity-info').style.display = 'block';
+    } catch {}
+  });
+
+  // Loading state saat submit
+  document.getElementById('encode-form').addEventListener('submit', () => {
+    const btn = document.getElementById('submit-btn');
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Memproses...';
+    btn.disabled = true;
+  });
+</script>
+{% endblock %}

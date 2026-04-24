@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Dekripsi AES-256{% endblock %}
+{% block topbar_title %}🔓 Dekripsi AES-256{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="cs-card">
+      <div class="cs-card-header" style="color:var(--primary);"><i class="bi bi-unlock-fill"></i> Dekripsi Ciphertext</div>
+      <div class="cs-card-body">
+        <form method="POST">
+          <div class="mb-3">
+            <label class="form-label">Ciphertext (Base64)</label>
+            <textarea name="ciphertext" class="form-control" rows="5" placeholder="Paste ciphertext di sini..." required></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Password Dekripsi</label>
+            <input type="password" name="password" class="form-control" placeholder="Masukkan password enkripsi..." required>
+          </div>
+          <button type="submit" class="btn-cs-primary w-100"><i class="bi bi-unlock-fill me-2"></i>Dekripsi Pesan</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    {% if result %}
+    <div class="cs-card mb-3">
+      <div class="cs-card-header" style="color:var(--accent);"><i class="bi bi-check-circle-fill"></i> Plaintext Asli</div>
+      <div class="cs-card-body">
+        <label class="form-label">Pesan Rahasia:</label>
+        <div id="plain-out" class="cipher-output">{{ result.plaintext }}</div>
+        <button class="btn-cs-outline mt-2" onclick="copyText('plain-out')"><i class="bi bi-clipboard"></i> Salin</button>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
